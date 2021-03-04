@@ -1,0 +1,37 @@
+关闭防火墙:
+firewall-cmd --state
+显示running，应该是防火墙没有关闭的原因。
+关闭防火墙服务
+systemctl stop firewalld.service
+禁用防火墙服务
+systemctl disable firewalld.service 
+同时修改selinux配置
+vi /etc/selinux/config
+SELINUX=enforcing改为SELINUX=disabled
+重启
+reboot
+
+修改root用户登录密码
+mysql -uroot
+mysql> alter user root@'localhost' identified by '123123';
+
+主数据库：
+创建用于主从同步的用户:
+mysql> CREATE USER 'slave'@'192.168.1.%' IDENTIFIED WITH mysql_native_password BY '123456';
+授予同步权限:
+mysql> GRANT REPLICATION SLAVE ON * .* TO 'slave'@'192.168.1.%';
+查看是否修改成功:
+mysql> select Host,User,authentication_string,Grant_priv,Super_priv from mysql.user;
+刷新权限列表：
+mysql> flush privileges;
+获取主节点当前binary log文件名和位置（position）
+mysql> show master status;
+
+从数据库：
+mysql -uroot
+mysql> stop slave;
+mysql> change master to master_host='192.168.1.100',master_port=3306,master_user='slave',master_password='123456',master_log_file='mysql-bin.000002',master_log_pos=1167;
+mysql> start slave;
+mysql> show slave status\G
+		  Slave_IO_Running: Yes
+          Slave_SQL_Running: Yes

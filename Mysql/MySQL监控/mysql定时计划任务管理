@@ -1,0 +1,101 @@
+通过mysql定时任务Event的调度来实现监控，在使用定时任务的调度过程中，需要用到存储过程
+1.创建语法如下:
+	CREATE
+		[DEFINER = { USER | CURRENT_USER }]
+		EVENT
+		[IF NOTE EXISTS]
+		event_name
+		ON SHCEDULE schedule
+		[ON COMPLETION [NOT] PRESERVE]
+		[ENABLE | DISABLE | DISABLE ON SLAVE]
+		[COMMENT 'comment']
+		DO event_body;
+	schedule:
+		AT timestamp [+ INTERVAL interval]...
+		| EVERY interval
+		[STARTS timestamp [+ INTERVAL interval]...]
+		[ENDS timestamp [+ INTERVAL interval]...]
+	interval:
+		quantity {YEAR | QUARTER | MONTH |
+		WEEK | SECOND | YEAR_MONTH |DAY_HOUR |DAY_MINUTE
+		DAY_SECOND | HOUR_MINUTE |HOUR_SECOND |MINUTE_SECOND}
+	event_name:创建even名字（唯一确定的）
+	schedule：决定event的执行时间和频率(必须将来的时间)，有两种形式AT和EVERY
+	[ON COMPLETION [NOT] PRESERVE]:可选项，默认是ON
+	 COMPLETION NOT PRESERVE 即计划任务执行完毕后自动drop该事件：
+	 ON COMPLETION PRESERVE则不会drop掉
+	[COMMENT 'comment']:可选项，comment用来描述event，相当于注释，最大长度64字节
+	[ENABLE |DISABLE]:设定event的状态
+	默认ENABLE：表示系统尝试执行这个事件
+	DISABLE：关闭该事件，可以用alter修改
+	DO event_body：需要执行的sql语句(可以是复合语句)CREATE EVENT在存储过程中使用是合法额
+	
+2.语法案列
+	2.1 5天后清空test表：
+CREATE EVENT e_test
+ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 5 DAY
+DO TRUNCATE TABLE test.aaa;
+	2.2 2021年1月23日12点整清空test表：
+CREATE EVENT e_test1
+ON SCHEDULE AT TIMESTAMP '2021-1-23 12:00:00'
+DO TRUNCATE TABLE test.aaa;
+	2.3 每天定时清空test表：
+CREATE EVENT e_test2
+ON SCHEDULE EVERY 1 DAY
+DO TRUNCATE TABLE test.aaa;
+	2.4 每天定时清空test表，5天后停止执行：
+		CREATE EVENT e_test
+		ON SCHEDULE EVERY 1 DAY
+		STARTSN CURRENT_TIMESTAMP + INTERVAL 5 DAY
+		DO TRUNCATE TABLE test.aaa;
+	2.5 每天定时清空test表，5天后停止执行：
+		CREATE EVENT e_test
+		ON SHCEDULE EVERY 1 DAY
+		ENDS CURRENT_TIMESTAMP + INTERVAL 5 DAY
+		DO TRUNCATE TABLE test.aaa;
+	2.6 5天后开启每天定时清空test表，一个月停止执行：
+		CREATE EVENT e_test
+		ON SCHEDULE EVERY 1 DAY
+		ENDS CURRENT_TIMESTAMP + INTERVAL1 MONTH
+		DO TRUNCATE TABLE test.aaa;
+	2.7 每天定时清空test表（只执行一次，任务完成后就终止该时间）：
+		CREATE EVENT e_test
+		ON SCHEDULE EVERY 1 DAY
+		ON COMPLETION NOT PRESERVE
+		DO TRUNCATE TABLE test.aaa;
+		
+3.开启event(要使定时起作用，mysql的常量global event_scheduleer 必须为on 或者1)
+	show variables like 'event_shceduler'
+	set global event_scheduler='on'
+  在[mysqld]下增加
+	event_scheduler = 0 #或者OFF,DISABLED
+
+4.创建event事件
+	drop event if exists middle_event;
+	create event middle_event;
+	on shcedule every 1 DAY
+	STARTS '2021-01-02 00:00:01'
+	on completion preserve ENABLE
+	do call middle_proce();		#调用存储过程
+5.开启与关闭event事件
+	alter event middle_event on completion perserve enable;
+	alter event middle_event on completion preserve disable;
+6.查看当前所在库的事件
+	show events；
+7.查看所有事件
+	select * from mysql.event;
+8.修改事件
+ 8.1 修改每分钟启动事件为每30秒启动
+		alter event test.event_minute
+		on schedule
+		every 30 second
+		do insert into events_list values('event_now',now());
+ 8.2 修改事件名字为event_second
+		alter event test.event_minute
+		rename to test.event_second;
+ 8.3 修改事件为不活动和再次活动
+		alter event test.event_second disable;
+		alter event test.event_second enable;
+		
+9.删除事件
+	drop event event_name

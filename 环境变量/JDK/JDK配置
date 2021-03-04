@@ -1,0 +1,21 @@
+JDK安装
+		官网https://www.oracle.com/java/technologies/javase-downloads.html
+tar xf jdk-14.0.1_linux-x64_bin.tar.gz 
+mv jdk14.0.1 /usr/local/jdk
+
+配置环境变量:
+vim ~/.bashrc
+	export JAVA_HOME=/usr/local/jdk
+	export PATH=$JAVA_HOME/bin:$PATH
+
+vim /etc/profile
+	export LANG=en_US.UTF8
+	export JAVA_HOME=/usr/local/jdk
+	export JRE_HOME=$JAVA_HOME/jre
+	export CLASSPATH=.:$JAVA_HOME/lib:$JRE_HOME/lib:$CLASSPATH
+	export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$PATH
+	
+重新加载环境变量
+source /etc/profile
+查看JDK
+java -version

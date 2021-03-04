@@ -1,0 +1,126 @@
+[root@localhost ~]# wget https://sourceforge.net/projects/xampp/files/XAMPP%20Linux/5.6.30/xampp-linux-x64-5.6.30-1-installer.run/download
+[root@localhost ~]# chmod +x xampp-linux-x64-5.6.30-0-installer.run
+[root@localhost ~]# ./xampp-linux-x64-5.6.30-0-installer.run
+
+[root@localhost ~]# vim /etc/profile
+	export PATH=$PATH:/opt/lampp/bin/
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/lampp/lib
+[root@localhost ~]# source /etc/profile
+[root@localhost ~]# which mysql_config
+	/opt/lampp/bin/mysql_config
+wget https://pypi.python.org/packages/source/M/MySQL-python/MySQL-python-1.2.5.zip
+[root@localhost ~]# yum -y install unzip
+[root@localhost ~]# unzip MySQL-python-1.2.5.zip
+[root@localhost ~]# vim MySQL-python-1.2.5/site.cfg
+	mysql_config = /usr/bin/mysql_config
+下载下载ez_setup.py并安装
+[root@localhost MySQL-python-1.2.5]#  wget https://bootstrap.pypa.io/ez_setup.py
+	会安装一个setuptools-33.1.1
+[root@localhost MySQL-python-1.2.5]# python ez_setup.py
+	也可以自己下载setuptools-33.1.1.zip包，在进行python ez_setup.py
+
+安装依赖包
+yum -y install gcc python-devel
+[root@localhost MySQL-python-1.2.5]# python setup.py build
+[root@localhost MySQL-python-1.2.5]# python setup.py install
+下载安装包
+[root@xiaoge MySQL-python-1.2.5]# cd /usr/local
+
+[root@localhost local]# git config --global http.sslVerify false
+[root@xiaoge local]# git clone https://github.com/ruzuojun/lepus.git
+对可执行文件授权，并创建软连接
+[root@xiaoge local]# cd lepus
+[root@xiaoge lepus]# chmod +x lepus*
+[root@xiaoge lepus]# ln -s /usr/local/lepus/lepus /usr/local/sbin/lepus
+[root@xiaoge lepus]# ln -s /usr/local/lepus/lepus_monitor /usr/local/sbin/lepus_mointor
+
+在监控机创建监控数据库，并授权
+[root@xiaoge lepus]# mysql -uroot -p
+MySQL [(none)]> create database lepus default character set utf8;
+Query OK, 1 row affected (0.01 sec)
+
+MySQL [(none)]> grant select,insert,update,delete,create on lepus.* to 'lepus'@'localhost' identified by '123456';
+Query OK, 0 rows affected (0.00 sec)
+
+MariaDB [(none)]> grant select,insert,update,delete,create on lepus.* to 'lepus'@'192.168.1.104' identified by '123456';
+Query OK, 0 rows affected (0.00 sec)
+
+MySQL [(none)]> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+导入SQL文件夹里的初始化SQL文件(表结构和数据文件)
+MySQL [lepus]> use lepus;
+MySQL [lepus]> source /usr/local/lepus/sql/lepus_table.sql;
+MySQL [lepus]> source /usr/local/lepus/sql/lepus_data.sql;
+
+[root@localhost ~ ]# vim /usr/local/lepus/etc/config.ini 
+		[monitor_server]
+		host="127.0.0.1"
+		port=3306
+		user="lepus"
+		passwd="123456"
+		dbname="lepus"
+[root@localhost ~ ]# mv /opt/lampp/htdocs/*  /shengyu
+[root@localhost ~ ]# cp /usr/local/lepus/web/* /opt/lampp/htdocs/
+[root@localhost ~]# vim /opt/lampp/htdocs/application/config/database.php
+	$db['default']['hostname'] = '192.168.1.104';
+	$db['default']['port']     = '3306';
+	$db['default']['username'] = 'lepus';
+	$db['default']['password'] = '123456';
+	$db['default']['database'] = 'lepus';
+	$db['default']['dbdriver'] = 'mysql';
+
+CREATE USER 'lepus'@'%' IDENTIFIED BY '123456';
+grant select,super,process,reload,show databases,replication client on *.* to 'lepus'@'%' identified by '123456';
+被监控
+mysql> CREATE USER 'lepus'@'192.168.1.%' IDENTIFIED WITH mysql_native_password BY '123456';
+mysql> GRANT select,super,process,reload,show databases,replication client ON *.* TO 'lepus'@'192.168.1.%' WITH GRANT OPTION;
+
+GRANT SUPER,REPLICATION CLIENT ON *.* TO 'lepus'@'localhost' WITH GRANT OPTION;
+yum -y install perl-IO-Socket-SSL  perl-DBI perl-DBD-MySQL perl-Time-HiRes  perl-Digest-MD5
+wget https://www.percona.com/downloads/percona-toolkit/2.2.14/RPM/percona-toolkit-2.2.14-1.noarch.rpm
+wget https://www.percona.com/downloads/percona-toolkit/2.2.6/RPM/percona-toolkit-2.2.6-1.noarch.rpm
+rpm -ivh percona-toolkit-2.2.14-1.noarch.rpm --force --nodeps
+
+lepus 监控端
+MariaDB [(none)]> grant select,insert,update,delete,create on lepus.* to 'lepus'@'192.168.1.101' identified by '123456';
+Query OK, 0 rows affected (0.01 sec)
+
+MySQL 主从被监控端
+mysql> CREATE USER 'lepus'@'localhost' IDENTIFIED WITH mysql_native_password BY '123456';
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> GRANT select,super,process,reload,show databases,replication client ON *.* TO 'lepus'@'localhost' ；
+
+
+[root@localhost ~]# vim /etc/selinux/config
+	SELINUX=disabled
+[root@localhost ~]# systemctl stop firewalld
+
+		
+
+
+
+
+
+
+
+
+
+
+
+报错：
+root@localhost lepus]# cat logs/lepus.log 
+Traceback (most recent call last):
+  File "lepus.py", line 8, in <module>
+    import MySQLdb
+  File "build/bdist.linux-x86_64/egg/MySQLdb/__init__.py", line 19, in <module>
+  File "build/bdist.linux-x86_64/egg/_mysql.py", line 7, in <module>
+  File "build/bdist.linux-x86_64/egg/_mysql.py", line 6, in __bootstrap__
+ImportError: libmysqlclient.so.20: cannot open shared object file: No such file or directory
+[root@localhost lepus]# ln -sf /usr/local/mysql/lib/libmysqlclient.so.20 /usr/lib/
+[root@localhost lepus]# ln -sf /usr/local/mysql/lib/libmysqlclient.so.20 /usr/lib64/
+
+
+
+

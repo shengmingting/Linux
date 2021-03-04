@@ -1,0 +1,40 @@
+mysql binlog二进制文件
+	记录了mysql数据库所有的dml,ddl语句事件（不包括select）包括行记录操作事件等等
+	
+三种日志的区别：
+	1.general log:记录数据库里面所有的sql操作记录
+	2.redo LOG:只记录innodb存储引擎级的修改日志
+	3.binlog：只记录server层面内部的修改情况。select/show不记录
+
+开启binlog二进制日志的好处
+	1.mysql主从复制，通过binlog实现数据复制
+	2.数据恢复：宕机恢复，异常操作的恢复
+	 不好的就是：大概损失1%左右的性能，占用空间
+	 
+mysql binlog的三种工作模式
+	binlog_format
+	1.rew level （行的级别，默认级别：mysql-5.7.6之后+8.0）
+		优点：记录每一行数据修改的情况，可以方便查看每一条数据修改的细节
+		缺点：数据量比较大
+		使用场景：希望数据最安全，复制强一致
+	2.statement level （语句级别，默认级别：mysql-5.7.6之前）
+		记录每一条修改的sql
+		优点：解决了数据量比较大的问题
+		缺点：容易出现主从复制不一致
+		使用场景：使用mysql的功能比较少，又不使用存储过程/触发器/函数
+	3.mixed（混合模式）
+		结合row level与statement level的优点 不推荐使用
+	
+-- 配置mysql binlog二进制日志
+	SHOW VARIABLES LIKE '%log_bin%';
+	SHOW VARIABLES LIKE '%binlog%';
+	SHOW VARIABLES LIKE '%server_id%';
+	
+-- 配置到mysql配置文件my.cnf里面
+	#server_id=1 (推荐数字：IP+端口)
+	#log_bin=/mysql/log/binlog/smc-binlog (这个名字会自动加后缀：.00000*)
+	#log_bin_index=/mysql/log/binlog/smc-binlog.index
+	#binlog_format='row' (row,statement,mixed)
+	#binlog_rows_query_log_events=on
+	检查：flush logs;
+		 mysqlbinlog

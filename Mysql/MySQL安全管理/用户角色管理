@@ -1,0 +1,41 @@
+mysql 5.7:proxies_priv(模拟角色)，可以实现用户组的管理
+角色（role）可以批量管理用户，同一个角色下面的数据都有相同的权限
+mysql 5.7是通过mysql.proxies_priv来模拟实现的。
+
+参数：
+check_proxy_users=on
+mysql_native_password_proxy_users=on
+
+示例：
+1.启用proxy
+ show varibles like '%proxy%'
+ set global check_proxy_users=on;
+ set global mysql_native_passwrod_proxy_users=on;
+ 永久打开需要加入到my.cnf参数文件中，重启生效，放到[mysqld中即可]
+
+2.创建用户
+ create user 'achao';	#类似组/角色
+ create user 'achao1'
+ create user 'achao2'
+ create user 'achao3'
+3.权限映射 将achao权限映射到achao1/achao2
+ grant proxy on achao to achao1;
+ grant proxy on achao to achao2;
+4.给achao（模拟的role）赋予实际的权限
+ grant select on wordpress.* to achao;
+ flush privileges;
+5.检查权限测试
+ show grants for achao;
+ show grants for achao1;
+ show grants for achao2;
+ show grants fro achao3;
+	select * from mysql.`proxies_priv`;
+	然后分别用这几个账号登录测试
+6.搭理权限取消
+ revoke proxy on achao from achao1;
+	
+	
+	
+	
+	
+mysql 8.0:role

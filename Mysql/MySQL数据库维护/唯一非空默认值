@@ -1,0 +1,35 @@
+字段是唯一的，表中某一列不能出现重复的值
+ 格式 字段名 字段类型 unique
+
+CREATE TABLE achao(
+	id INT,
+	NAME VARCHAR(50) UNIQUE
+	);
+INSERT INTO achao VALUES(1,'xiaorui');
+INSERT INTO achao VALUES(2,'xiaorui');	#报错xiaorui' for key 'NAME'
+INSERT INTO achao VALUES(3,NULL);
+INSERT INTO achao VALUES(5,NULL);	#空值可以重复
+
+
+非空约束：某一列不能为null
+	字段名 字段类型 not null
+
+CREATE TABLE achao(
+	id INT,
+	NAME VARCHAR(50) NOT NULL
+	);
+INSERT INTO achao VALUES(3,NULL);	#报错：Column 'NAME' cannot be null
+
+
+
+默认值：
+	字段名 字段类型 default 默认值
+CREATE TABLE achao(
+	id INT,
+	NAME VARCHAR(50),
+	address VARCHAR(100) DEFAULT '达州'
+	);
+INSERT INTO achao(id,NAME) VALUES(1,'xiaorui');
+SELECT * FROM achao;	#address默认就为达州了
+INSERT INTO achao(id,NAME,address) VALUES(1,'xiaorui','成都');
+SELECT * FROM achao;	#也可以添加什么就为你指定的什么地址了

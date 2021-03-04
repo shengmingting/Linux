@@ -1,0 +1,84 @@
+官网下载zabbix 安装包
+	yum -y install net-snmp net-snmp-devel
+	yum -y install pcre*
+==========================================================
+==========================================================
+wget https://cdn.zabbix.com/zabbix/sources/stable/5.2/zabbix-5.2.4.tar.gz
+tar xf zabbix-5.2.4.tar.gz
+cd zabbix-5.2.4
+./configure --prefix=/usr/local/zabbix --enable-agent && make && make install
+cp misc/init.d/fedora/core/zabbix_agentd /etc/init.d/
+chmod +x /etc/init.d/zabbix_agentd
+============================================
+			vim /etc/init.d/zabbix_agentd
+					BASEDIR=/usr/local/zabbix/
+					PIDFILE=/usr/local/zabbix/$BINARY_NAME.pid
+			vim /usr/local/zabbix/etc/zabbix_agentd.conf
+					Server=192.168.1.85				服务端地址
+					ServerActive=192.168.1.85		服务端地址
+					ListenIP=127.0.0.1				本机地址
+					HostMetadataItem=system.uname
+					Include=/usr/local/zabbix/etc/zabbix_agentd.conf.d/*.conf
+					UnsafeUserParameters=1
+
+安装nginx用于监控
+vim /usr/local/nginx/conf/nginx.conf
+	location /nginx_status {
+                 stub_status on;
+                 access_log off;
+                 allow 127.0.0.1;
+                 deny all;
+         }
+
+vim /usr/local/zabbix/etc/zabbix_agentd.conf.d/nginx_monitor.sh
+======================================================================
+#!/bin/bash
+#
+host=${2:-'127.0.0.1'}
+port=${3:-'80'}
+page=${4:-'nginx_status'}
+info=$(/usr/bin/curl --connect-timeout 5 -s http://${host}:${port}/${page} 2>/dev/null)
+code=$(/usr/bin/curl --connect-timeout 5 -o /dev/null -s -w %{http_code} http://${host}:${port}/${page})
+proc=$(/usr/bin/pgrep nginx | wc -l)
+
+case "$1" in
+  status)
+    echo "$code $proc" | awk '{code=$1}{proc=$2}END{if(code == "200" && proc != 0){printf("%d\n",1)}else{printf("%d\n",0)}}'
+    ;;
+  active)
+    echo "$info" | awk '/^Active/{var=$NF}END{if(var~/^[0-9]+$/){printf("%d\n",var)}else{printf("%d\n",0)}}'
+    ;;
+  reading)
+    echo "$info" | awk '/Reading/ {print $2}'
+    ;;
+  writing)
+    echo "$info" | awk '/Writing/ {print $4}'
+    ;;
+  waiting)
+    echo "$info" | awk '/Waiting/ {print $6}'
+    ;;
+  accepts)
+    echo "$info" | awk 'NR==3 {print $1}'
+    ;;
+  handled)
+    echo "$info" | awk 'NR==3 {print $2}'
+    ;;
+  requests)
+    echo "$info" | awk 'NR==3 {print $3}'
+    ;;
+  restimes)
+    echo "$info" | awk 'BEGIN{OFMT="%.3f"} NR==3 {print $4/$3}'
+    ;;
+  *)
+    echo "ZBX_NOTSUPPORTED"
+    ;;
+esac
+=======================================================================
+vim /usr/local/zabbix/etc/zabbix_agentd.conf.d/nginx_monitor.conf
+	UserParameter=nginx_status[*],/bin/bash /usr/local/zabbix/etc/zabbix_agentd.conf.d/nginx_monitor.sh "$1"
+
+在zabbix服务端检测能否获取值
+./zabbix_get -s 192.168.1.106 -p 10050 -k "nginx_status[status]"
+
+在Zabbix的web界面
+	点击——————>模板————————>创建模板——————————>创建监控项——————————>创建触发器

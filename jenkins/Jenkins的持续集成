@@ -1,0 +1,58 @@
+持续集成（Continuous integration, 简称CI）
+	持续集成指的是，频繁的将代码集成到master
+		它的好处主要有两个：
+			1.快速发现错误，定位错误也比较容易
+			2.防止分支大幅度偏离master
+
+持续交付（Continuous delivery, 简称CD）
+	指的是，频繁地将软件的新版本，交付给质量团队或用户，以供评审。评审通过，代码就进入生产阶段
+		持续交付是将集成后的代码部署到测试环境中运行
+持续部署（Continuous deployment, 简称CD）
+	在持续部署之后，代码通过了评审测试，部署到线上生产环境
+	
+一· Jenkins安装
+		官网：https://jenkins.io/
+		官方文档：https://jenkins.io/doc/
+		中文官网：htpps://jenkins.io/zh/
+[root@client jenkins# wget https://get.jenkins.io/war-stable/2.263.3/jenkins.war
+[root@client jenkins# nohup java -jar jenkins.war $
+修改jenkins端口为80：
+[root@client jenkins# java -jar jenkins.war --ajp13Port=-1 --httpPort=80 &
+
+	yum安装jenkins
+[root@client jenkins]# wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+[root@client jenkins]# rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+[root@client jenkins]# yum -y install jenkins
+	
+二· JDK安装
+		官网https://www.oracle.com/java/technologies/javase-downloads.html
+创建一个存放JDK的目录
+[root@client java]# mkdir /usr/java
+解压tar包到/usr/java/下
+[root@client java]# tar xf jdk-14.0.1_linux-x64_bin.tar.gz
+[root@client java]# mv jdk-14.0.1 /usr/java/
+添加JDK的环境变量
+[root@client java]# vim /etc/profile
+	export JAVA_HOME=/usr/java/jdk-14.0.1
+	export PATH=$JAVA_HOME/bin:$PATH
+	export CLASSPATH=.:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/dt.jar:$CLASSPATH
+[root@client ~]# source /etc/profile
+查看java版本
+[root@client ~]# java -version
+
+Maven官网：https://maven.apache.org/download.cgi
+下载然后解压到指定路径并修改文件名：
+[root@client jenkins]# wget https://mirror.bit.edu.cn/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+[root@client local]# tar xf apache-maven-3.6.3-bin.tar.gz -C/usr/local/
+[root@client local]# mv /usr/local/apache-maven-3.6.3 /usr/local/maven
+
+
+安装Git
+[root@client local]# yum -y install git
+
+输入网址http://47.108.179.180:8080
+		进入登录界面输入密码
+		进行插件安装
+建立Jenkins发布代码到线上服务器的通信简介
+[root@client jenkins]# ssh-keygen
+[root@client jenkins]# ssh-copy-id -i /root/.ssh/id_rsa.pub root

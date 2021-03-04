@@ -1,0 +1,44 @@
+审计：查证据，方便以后查证据，但是生产环境开启会影响性能，但是可以用第三方审计
+
+一、开源审计功能 mysql Audit pLuging
+mysql 5.7企业版自带审计功能，需要付费
+社群版可以用开源的mysql-audit mysql Audit Pluging（McAfee提供的）
+去下载：www.github.com/mcafee
+https://github.com/mcafee/mysql-audit
+
+安装配置过程：
+	首先解压然后找到解压目录lib/libaudit_plugin.so这个文件
+	然后登陆数据库找到插件的目录：show global variables like 'plugin_dir';
+		/usr/lib64/mysql/plugin/ 
+	把上面的插件拷贝到这个目录去
+		：cp -i lib/libaudit_plugin.so /usr/lib64/mysql/plugin/
+		确保复制过去的权限是可执行的
+	另外在解压下面的目录下面utils下面执行 which mysqld
+		./offset-extract.sh /usr/sbin/mysqld
+		得到一串数字，并记录下这些数字
+		
+	在[mysqld]部分的MySQL选项文件（my.cnf）中添加以下选项：
+	plugin-load=AUDIT=libaudit_plugin.so
+	audit_offsets=7824, 7872, 3632, 4792, 456, 360, 0, 32, 64, 160, 536, 7988, 4360, 3648, 3656, 3660, 6072, 2072, 8, 7056, 7096, 7080, 13472, 148, 672
+	重新启动mysqld服务器，以使更改生效。
+	
+	您将需要发出以下sql命令来安装插件：
+	
+	INSTALL PLUGIN AUDIT SONAME 'libaudit_plugin.so';
+	验证：show plugins；
+	查看版本：show global status like 'AUDIT_version';
+
+	show global variables like '%audit%'\G;
+   查看插件是否开启：
+	show global variables like '%audit_json_file%';
+	show global variables like '%audit_json%'; #查看默认文件在哪里存放
+   查看记录什么记录，增加删除等等，可查看官方文档 https://github.com/mcafee/mysql-audit/wiki/Configuration
+	show global variables like '%audit_record%';
+	
+	vim my.cnf
+		[mysqld]
+			audit_json_file=on
+			audit_json_log_file=/data/logs/mysql-audit.json
+			audit_record_cmds='insert,delete,update,create,drop,alter,grant,truncate'
+	不设置audit_json_file,所有的操作都记录
+	有bug，而且非常影响性能，强烈建议不适用这个插件

@@ -1,0 +1,17 @@
+在官网的下载地址
+将文件放到yum创库
+[root@AliYun ~]# curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | sudo bash
+yum 安装
+[root@AliYun ~]# yum -y install gitlab-ce
+修改配置文件
+[root@AliYun ~]# vim /etc/gitlab/gitlab.rb
+		external_url 'http://47.108.179.180'（47.108.179.180）是gitlab服务器的ip地址
+最后直接启动服务
+[root@AliYun ~]# gitlab-ctl restart
+接下来使用浏览器输入47.108.179.180进行登录gitlab页面
+		输入新密码
+	默认用户为root
+ 	密码为新密码
+
+
+

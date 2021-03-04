@@ -1,0 +1,48 @@
+mysql ssl实现的流程
+1.为mysql服务器创建ssl整数和秘钥
+2.在mysql里面设置ssl，并启动服务
+3.创建用户的时候带上ssl标签。require ssl
+4.连接数据库的时候带上ssl
+
+检查数据库是否启用ssl
+	show variables like 'ssl'
+配置ssl方法
+1.手动配置：mysql 5.7.6-查看官方手册，手工创建的文档
+2.自动配置：mysql 5.7.6+
+	yum -y install openssl
+	mysql_ssl_rsa_setup --datadir=/data/mysql/ssl --user=mysql --uid=mysql
+	自动上面目录创建了8个文件，如下
+	ca-key.pem  client-cert.pem  private_key.pem  server-cert.pem
+	ca.pem      client-key.pem   public_key.pem   server-key.pem
+3.修改my.cnf [mysqld]
+	ssl-ca=/data/mysql/ssl/ca.pem
+	ssl-cert=/data/mysql/ssl/server-cert.pem
+	ssl-key=/data/mysql/ssl/server-key.pem
+	
+	show global variables like '%ssl%';
+	show global variables like 'tls_version';
+	
+4.配置ssl用户并测试
+	create user achao11@'%' identified by '123456';
+	grant all on *.* to achao11@'%';
+	flush privileges;
+	SELECT USER,HOST,ssl_type,ssl_cipher FROM mysql.user;
+
+5.不强制使用ssl登录	
+ssl登录时的选项
+	--ssl-mode=required
+	--ssl-mode=disable
+		mysql -uroot -p --ssl-mode=required
+		status;
+	mysql -uroot -p  --ssl-ca=/data/mysql/ssl/ca.pem --ssl-cert=/data/mysql/ssl/client-cert.pem --ssl-key=/data/mysql/ssl/client-key.pem
+6.强制使用ssl登录
+	create user achao33@'%' indentified by 'smc' require x509;
+	grant all on *.* to achao33@'%';
+	flush privileges;
+	SELECT USER,HOST,ssl_type,ssl_cipher FROM mysql.user;
+7.取消ssl用户认证
+	alter user achao33@'%' require none;
+	SELECT USER,HOST,ssl_type,ssl_cipher FROM mysql.user;
+	
+性能会降低%5到20%左右
+jdbc客户如何连接：在url里面加入ssl=true,ssl=false

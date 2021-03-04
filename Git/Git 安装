@@ -1,0 +1,97 @@
+yum -y install Git
+##安装完成后，需要最后一步设置
+[root@Git ~] git config --global user.name "Your Name"
+[root@Git ~] git config --global user.email "email@qq.com"
+###############################################################
+#################################################################
+##随便创建一个空目录（作为Git的工作区）
+[root@Git ~]  mkdir /home/kongmulu
+##再进入创建的空目录进行初始化
+[root@kongmulu] git init
+##初始化后目录里会出现一个.git的文件
+##在目录添加一个文本文件（daima）
+[root@kongmulu] vim /home/kongmulu/daima.txt
+##将文件添加到暂存区
+[root@kongmulu] git add daima.txt
+##再提交文件到master主分支,提交是必须有说明
+[root@kongmulu] git commit -m "shuoming"
+#############################################################
+					Git文件的修改
+###############################################################
+##修改daima.txt文件内容
+[root@kongmulu] echo "I am shengyu" >> daima.txt
+##查看工作区状态
+[root@kongmulu]# git status
+    # On branch master
+    # Changes not staged for commit:
+	#   (use "git add <file>..." to update what will be committed)
+	#   (use "git checkout -- <file>..." to discard changes in working directory)
+	#
+	#	修改:   daima.txt
+	#
+	#no changes added to commit (use "git add" and/or "git commit -a")
+##查看diama.txt文件修改的内容
+[root@AliYun Git]# git diff baima.txt 
+	diff --git a/daima.txt b/daima.txt
+	index a9ccf26..90f9d5d 100644
+	--- a/daimatxt
+	+++ b/daima.txt
+	@@ -1 +1,2 @@
+	I am dashuaibi
+	+I am shengyu （第二行添加了“I am shengyu”）
+##将修改后的文件提交到版本库（和添加提交命令一样）
+[root@kongmulu]# git add daima.txt 
+[root@kongmulu]# git commit -m "shuoming"
+	[master 0772772] shuoming
+	1 file changed, 2 insertions(+)
+	create mode 100644 daima.txt
+######################################################################
+						Git版本回退
+#####################################################################
+##查看Git版本记录
+[root@AliYun Git]# git log
+	commit 077277278e24aecf5a9bb8d842105741a4e0cf29
+	Author: shengmingting <1455188390@qq.com>
+	Date:   Thu Jan 28 16:00:54 2021 +0800
+
+		shuoming
+
+	commit c40ee4223b284202e5a9b76df45658df66c26722
+	Author: shengmingting <1455188390@qq.com>
+	Date:   Thu Jan 28 15:29:43 2021 +0800
+	
+		sy
+##回退到上一个版本		回退到上上个版本就是HEAD^^
+[root@AliYun Git]# git reset --hard HEAD^
+##恢复到回退之前的版本		需要知道版本的commit号
+[root@AliYun Git]# git reset --hard 077277278e24aecf5a9bb8d842105741a4e0cf29
+##查看Git历史版本记录
+[root@AliYun Git]# git reflog
+	0772772 HEAD@{0}: reset: moving to 077277278e24aecf5a9bb8d842105741a4e0cf29
+	a8b6aae HEAD@{1}: commit: mv datma.txt	
+	c40ee42 HEAD@{2}: reset: moving to HEAD^
+	0772772 HEAD@{3}: commit: shuoming
+	c40ee42 HEAD@{4}: commit (initial): sy
+####################################################################
+					Git文件撤销与删除
+####################################################################
+###Git撤销未添加到暂存区的代码
+[root@AliYun Git]# git checkout -- daima.txt
+###Git撤销已经添加到暂存区的代码
+[root@AliYun Git]# git reset HEAD daima.txt 
+	Unstaged changes after reset:
+	M	daima.txt
+[root@AliYun Git]# git checkout -- daima.txt
+##Git彻底删除文件
+[root@AliYun Git]# rm -fr daima.txt
+[root@AliYun Git]# git rm daima.txt
+	rm 'daima.txt'
+[root@AliYun Git]# git commit -m "deletd daima.txt"
+	[master b6f827f] deletd daima.txt
+	1 file changed, 2 deletions(-)
+	delete mode 100644 daima.txt
+##Git工作区误删文件（未彻底删除）进行恢复（只能恢复到最新版本）
+[root@AliYun Git]# git checkout -- daima.txt
+
+
+

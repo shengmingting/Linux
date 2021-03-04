@@ -1,0 +1,54 @@
+单列排序
+	只按某一个字段进行排序
+-- 查询所有数据，使用年龄降序排序
+SELECT * FROM student2 ORDER BY age DESC;	(排序的关键字是order BY ,desc代表降序)
+SELECT * FROM student2 ORDER BY age ASC;	（asc代表升序）
+SELECT * FROM student2 ORDER BY age;		(默认就是升序排)
+	
+	
+组合排序
+	按照多个字段进行排序
+-- 查询所有数据，在年龄降序排序的基础上，如果年龄相同再以数学成绩升序排序
+UPDATE student2 SET age=20 WHERE id=1;
+SELECT * FROM student2 ORDER BY age DESC,math ASC;
+
+
+聚合函数
+	之前的都是横向查询，他们都是根据条件一行一行的进行判断
+	聚合函数的查询是纵向查询，他是对一列的值进行计算，然后返回一个结果值
+	聚合函数会忽略空值null
+	 max(列名)	求这一列的最大值
+	 min(列名)	求这一列的最小值
+	 avg(列名)	求这一列的平均值
+	 count(列名)	统计这一列有多少条记录 默认不记录为空的一项 可以用ifnull设置为其他数
+	 sum(列名)	对这一列求总和   只能是数字
+ 
+ -- 查询学生的总数
+ SELECT COUNT(english) AS 总数 FROM student2;	5	#count 默认为空不统计，可以使用ifnull函数结合使用
+ SELECT COUNT(id) AS 总数 FROM student2;		6
+ SELECT COUNT(*) AS 总人数 FROM student2;	
+ 
+ -- 查询ID字段如果为null 则使用0代替
+ INSERT INTO student2(id,NAME,age,sex,address,math)
+ 	VALUES(6,'阿朝',26,'男','堡子',100);
+ SELECT IFNULL(english,0) FROM student2;		#ifnull 函数
+ SELECT COUNT(IFNULL(english,2)) FROM student2;
+ 
+ -- 查询年龄大于20的总数
+ SELECT COUNT(*) FROM student2 WHERE age>20;
+ 
+ 
+ -- 查询数学成绩的总分
+ SELECT SUM(math) FROM student2;
+ 
+ 
+ -- 求数学成绩的平均分
+ SELECT AVG(math) FROM student2;
+ 
+ 
+ -- 查询数据成绩的最高分
+ SELECT MAX(math) FROM student2;
+ 
+ 
+ -- 查询数学成绩的最低分
+ SELECT MIN(math) FROM student2;

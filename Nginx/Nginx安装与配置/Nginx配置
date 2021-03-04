@@ -1,0 +1,119 @@
+查看nginx连接数最大值
+[root@client conf]# ulimit -n
+65535
+[root@client ~]# vim /usr/local/nginx/conf/nginx.conf
+##定义Nginx运行用户和用户组
+user  nginx nginx;
+##进程数量(工作环境中建议设置为cup总核心数)
+worker_processes  1;
+##全局错误日志定义类型
+error_log  /usr/local/nginx/logs/error.log info;
+##进程Pid文件
+pid        /usr/local/nginx/logs/nginx.pid;
+##
+##使用命令ulimit -n查看最大值
+worker_rlimit_nofile 65535;
+
+
+events {
+##Nginx使用最新epoll网络I/O模型
+	use epoll;
+##每个工作进程允许最大同时连接数
+	worker_connections  1024;
+	}
+
+
+http {
+##mime.types内定义各文件类型映像
+	include       mime.types;
+##默认类型是二进制流，若没有设置，比如加载PHP时，是不解析的
+	default_type  application/octet-stream;
+##定义访问日志输出格式
+	log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+##定义字符集
+	charset utf-8;
+#access_log  logs/access.log  main;
+##打开系统函数sendfile(),支持下载
+	sendfile        on;
+##只有在Linux下的tcp_cork,sendfile打开时才有效
+	tcp_nopush     on;
+##会话保持时间，设置低一些可以让nginx持续工作时间更长
+    keepalive_timeout  60;
+##不要缓存数据，而是一段一段的发送。当需要及时发送数据时，就应该设置这个属 性，这样发送一小块数据信息时就不能立即得到返回值
+    tcp_nodelay on;
+##指定连接请求实体的缓存大小
+    client_body_buffer_size 512k;
+##代理连接超时时间，单位秒
+    proxy_connect_timeout 5;
+##代理接收超时时间，单位秒
+    proxy_read_timeout 60;
+##代理发送超时时间，单位秒
+    proxy_send_timeout 5;
+##代理缓存文件大小
+    proxy_buffer_size 16k;
+##代理缓存区的数量及大小，默认一个缓冲区大小与页面大小相等
+    proxy_buffers 4 64k;
+##高负荷下缓存大小
+    proxy_busy_buffers_size 128k;
+##代理临时文件大小
+    proxy_temp_file_write_size 128k;
+##代理临时文件存放目录  注:mkdir -p /usr/local/nginx/cache/ 创建临时文件存放目录
+    proxy_temp_path /usr/local/nginx/cache/cache_temp;
+## 代理缓存存放路径，第一层目录只有一个字符，是由 levels=1:2 设置，总共二层目录， 子目录名字由二个字符组成，键值名称为 cache_one（名字随意），在内存中缓存的空间大 小为 200MB，1 天内没有被访问的缓存将自动清除，
+硬盘缓存空间为 30GB 
+## 注：proxy_temp_path 与 proxy_cache_path 指定的路径必须在同一分区 
+    proxy_cache_path /usr/local/nginx/cache/proxy_cache levels=1:2 keys_zone=cache_one:200m inactive=1d max_size=30g;
+
+##上游服务器节点，权重 1（数字越大权重越大），30 秒内访问失败次数大于等于 2 次， 将在 30 秒内停止访问此节点，30 秒后计数器清零，可以重新访问。
+    upstream backend_server {
+##每个请求按访问IP的hash结果分配，这样每个访客固定访问一个后端节点，可以解决session的问题
+        #ip_hash
+##填写后端Web服务器节点
+		server 47.108.179.180:80 weight=1 max_fails=2 fail_timeout=30s;
+        server 47.108.80.150:80 weight=1 max_fails=2 fail_timeout=30s;
+    }
+    server {
+        listen       80;
+        server_name  localhost;
+        index index.html index.htm;
+##如果后端服务器返回 502、504、错误等错误，自动跳转到 upstream 负载均衡池中的另一台服务器，实现故障转义 
+
+        location / {
+        proxy_next_upstream http_502 http_504 error timeout invalid_header;
+        proxy_cache cache_one;
+##对不同的 HTTP 状态码设置不同的缓存时间  
+        proxy_cache_valid 200 304 12h;
+##以域名、URI、参数组合成 Web 缓存的 Key 值，nginx 根据 Key 值哈希，存储缓存内容到 二级缓存目录内 
+        proxy_cache_key $host$uri$is_args$args;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
+##指定跳转服务器池，名字要与 upstream 设定的相同 
+        proxy_pass http://backend_server;
+        expires 1d;
+        }
+##用于清除缓存   
+        location ~ /purge(/.*) {
+##设置允许清除缓存的主机 IP 或网段          
+                allow 127.0.0.1;
+                allow 47.108.0.0/24;
+                deny all;
+                proxy_cache_purge cache_one $1$is_args$args;
+        }
+##扩展名以 php、jsp、cgi 结尾的动态应用程序不缓存 
+        location ~ .*\.(php|jsp|cgi)?$ {
+                proxy_set_header Host $host;
+                proxy_set_header X-Forwarded-For $remote_addr;
+                proxy_pass http://backend_server;
+        }
+  access_log off;
+
+      }
+
+
+    }
+"/usr/local/nginx/conf/nginx.conf" 112L, 4461C
+清楚/重新加载缓存
+[root@client proxy_cache]# rm -fr /usr/local/nginx/cache/proxy_cache/*

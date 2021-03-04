@@ -1,0 +1,28 @@
+CREATE TABLE student2(
+id INT,-- 编号
+NAME VARCHAR(20),-- 姓名
+age INT,-- 年龄
+sex VARCHAR(5),-- 性别
+address VARCHAR(50),-- 地址
+math INT,-- 数学
+english INT -- 英语
+);
+DESC student2;
+INSERT INTO student2(id,NAME,age,sex,address,math,english) VALUES
+(1,'小二',18,'男','四川',66,78),
+(2,'小三',19,'女','达州',90,98),
+(3,'小四',20,'男','宣汉',80,58),
+(4,'小五',21,'女','达州',70,68),
+(5,'小六',22,'女','达州',60,28);
+SELECT * FROM student2;
+SELECT NAME,age FROM student2;
+-- 查询并给字段别名
+SELECT NAME AS 姓名,age AS 年龄 FROM student2;
+-- 清除重复值
+SELECT address FROM student2;
+SELECT DISTINCT address FROM student2;
+-- 查询数学成绩并加5分
+SELECT NAME,math+5 FROM student2;
+-- 查询数学+英语的总分
+SELECT NAME,math+english AS 总分 FROM student2;
+SELECT *,math+english AS 总分 FROM student2;

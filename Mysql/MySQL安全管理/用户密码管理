@@ -1,0 +1,83 @@
+1.修改root密码
+	A.mysqladmin
+		mysqladmin -u root -h localhost -p password '123123';
+	B.修改mysql.user表
+		use mysql;
+		update mysql.user set authentication_string=PASSWORD('root') where user='root'
+		flush privileges;
+	C.使用set语句
+		set password=PASSWORD('123456')
+2.修改普通用户的密码
+	A.root登录 修改mysql.user表
+		use mysql;
+		update mysql.user set authentication_string=PASSWORD('root') where user='achao' and host='localhost'
+		flush privileges;
+	B.root 使用grant语句（推荐）
+		show grants for root;
+		grant usage on *.* to 'achao'@'%' indentified by '123123'
+		grant usage on *.* to 'achao'@'localhost' indentified by '123456'
+		flush privileges;
+	C.当前用户登录（比如：achao）
+		set password=PASSWORD'11111';
+	上面是5.7之前的修改密码方式
+	下面是5.7之后的修改密码方式
+	D.使用alter uesr (当前登录用户)
+		alter user 'root'@'localhost' indentified by '1231231'
+		alter user 'root'@'%' indentified by '1231231'
+3.密码过期问题
+	mysql5.7.11之前有一个360天密码过期问题。5.7.12只有又改为密码不过期
+	show variables like 'default_password_lifetime';
+	1.如果密码设置过期或者不过期
+		my.cnf参数
+		[mysqld]
+		default_password_lifetime=0 或360
+		重启生效
+	2.永久：alter user
+		alter user 'achao'@'localhost' password expire interval 90 day;
+		select * from mysql.user;
+		alter user 'achao'@'localhost' password expire never;
+		alter user 'achao'@'localhost' password expire default;
+4.用户锁定与解锁问题
+	alter user 'achao'@'localhost' account lock;
+	alter user 'achao'@'localhost' account unlock;
+5.root用户密码丢失的解决办法
+	A.service mysql stop
+	B.加入忽略授权表参数到my.cnf
+		[mysqld]
+			skip-grant-tables
+	C.service mysql start
+	D.mysql -uroot -p(不要密码)
+		use mysql;
+		update mysql.user set authentication_string=PASSWORD('root') where user='root'
+		flush privileges;
+	E.vim my.cnf
+		去掉skip-grant-tables
+	F.service mysql restart
+6.常用的5种登录方式
+	A.mysql -uroot -p
+	B.mysql -p
+	C.mysql -s /mysql/data/3306/mysql.sock -uroot -p
+	D.mysql -h ip -u root -p
+	E.mysql -hlocalhost -uroot -p123
+7.免密码登录的5种方式
+	A.统一方法：直接修改my.cnf
+		[client]
+		user="root"
+		password="123123"
+	  mysql默认加载识别的配置文件 mysql --help|grep my.cnf
+		加载其他文件下的配置文件：mysql --defaults-file=/mysql/data/3306/my.cnf
+		
+	B.当前环境变量
+		vim ~/.my.cnf
+			[client]
+			user="root"
+			password="123123"
+	C.最安全的方法，使用login-path
+		[root@wordpress]# mysql_config_editor set --login-path=achao --user=root --password
+		Enter password: 
+		[root@wordpress]# mysql_config_editor print --all
+		[achao]
+		user = root
+		password = *****
+		[root@wordpress]# mysql --login-path=achao
+		清除：mysql_config_editor remove --login-path=achao

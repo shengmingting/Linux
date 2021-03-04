@@ -1,0 +1,30 @@
+jenkins安装
+  *安装jenkins前的环境准备（centos7）
+	1.添加yum仓库源
+		#wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins.io/redhat-stable/jenkins.repo
+		#rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+	2.保证系统JAVA版本为8.0或以上
+		#yum -y install java
+		#java -version
+	3.关闭防火墙
+		#systemctl stop firewalld
+		#systemctl disable firewalld
+	4.关闭SELINUX并重启系统
+		#vim /etc/sysconfig/selinux
+		#...
+		SELINUS=disable
+		...
+		#reboot
+  *jenkins安装与初始化配置
+	1.Yum源安装jenkins最新版本
+		#yum -y install jenkins
+	2.创建Jenkins系统用户
+		#useradd deploy
+		#chown -R deploy:deploy /var/lib/jenkins/
+		#chown -R deploy:deploy /var/log/jenkins/
+	3.更改jenkins启动用户与端口
+		#vim/etc/sysconfig/jenkins
+			JENKINS_USER=deploy
+			JENKINS_PORT=80
+	4.启动jenkins
+		#systemctl start jenkins

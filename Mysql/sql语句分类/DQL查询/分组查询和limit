@@ -1,0 +1,33 @@
+select 字段1,字段2,... from 表名 group by 分组字段 having 条件
+将分组字段结果中相同内容为一组，如按性别将学生分成两组
+
+
+-- 按性别来分组
+SELECT * FROM student2;
+SELECT @@GLOBAL.sql_mode;
+SELECT * FROM student2 GROUP BY sex;	#默认只显示每组的第一行
+-- 如果报错提示only_grop_by什么的就再mysql的配置文件my.cnf下面添加
+-- [mysqld]
+-- sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
+-- 然后重启数据库
+
+-- 按性别进行分组，统计男生和女生数学的平均分
+SELECT sex AS 性别,AVG(math) AS 平均分 FROM student2 GROUP BY sex;
+
+-- 查询年龄大于20岁的人，按性别分组，统计每组的人数
+SELECT sex 性别,COUNT(*) 人数 FROM student2 WHERE age>20 GROUP BY sex; 	#as可以省略
+
+
+-- 查询年龄大于20岁的人，按性别分组，统计每组的人数，并只显示性别人数大于2的数
+SELECT sex 性别,COUNT(*) 人数 FROM student2 WHERE age>20 GROUP BY sex HAVING COUNT(*)>1;
+SELECT sex 性别,COUNT(*) 人数 FROM student2 WHERE age>20 GROUP BY sex HAVING 人数>1;
+
+
+
+limit
+	限制查询记录的数
+--查询学生表中数据，从第三条开始显示，显示4条
+SELECT * FROM student2 LIMIT 2,4;
+
+-- 每页显示2条，显示第三页
+SELECT * FROM student2 LIMIT 4,2;

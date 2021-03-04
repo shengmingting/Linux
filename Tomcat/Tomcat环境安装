@@ -1,0 +1,62 @@
+Tomcat和Nginx类似，都是Web服务器软件
+Nginx默认只支持静态资源
+Tomcat却支持java开发的jsp动态资源和静态资源
+Nginx适合做前端的负载均衡，Tomcat适合做后端应用服务处理。
+通常企业会使用Nginx+Tomcat结合使用，由Nginx处理静态资源，Tomcat处理动态资源
+Tomcat用与java开发的xxx.war代码包 
+
+Tomcat官网：https://tomcat.apache.org/
+[root@client ~ ]# wget https://downloads.apache.org/tomcat/tomcat-8/v8.5.61/bin/apache-tomcat-8.5.61.tar.gz
+JDK官网：https://www.oracle.com/java/technologies/javase-downloads.html
+注：JDK源码包需要下载到windows，在传到Linux，不能在Linux系统直接下载
+
+[root@client ~ ]# tar xf apache-tomcat-9.0.37.tar.gz -C /usr/local/
+[root@client ~]# cd /usr/local/
+[root@client local]# mv apache-tomcat-9.0.37/ tomcat
+[root@client local]# tar xf jdk-8u281-linux-x64.tar.gz -C /usr/local/
+[root@client local]# mv jdk1.8.281/ jdk
+
+配置JDK环境变量
+[root@client ~]# vim /etc/profile
+				export JAVA_HOME=/usr/local/jdk
+				export PATH=$JAVA_HOME/bin:$PATH
+				export CLASSPATH=.:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/dt.jar:$CLASSPATH
+非阻塞产生随机数：加快Tomcat启动时间
+[root@client logs]# vim /usr/local/jdk/jre/lib/security/java.security 
+						securerandom.source=file:/dev/uandom
+
+启动Tomcat服务：
+[root@client ~]# /usr/local/tomcat/bin/startup.sh
+关闭Tomcat服务
+[root@client ~]# /usr/local/tomcat/bin/shutdown.sh
+修改Tomcat服务端口（默认端口8080改为5555）
+[root@client ~]# vim /usr/local/tomcat/conf/server.xml 
+		<Connector port="5555" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="8443" />
+
+给Tomcat加basic认证
+[root@client ~]# vim /usr/local/tomcat/conf/tomcat-users.xml
+				<role rolename =“ manager-gui” />
+				<user username =“ tomcat” password =“ 123123” role =“ manager-gui” />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

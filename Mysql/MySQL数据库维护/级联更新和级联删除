@@ -1,0 +1,33 @@
+接到上一部分的外键约束
+	直接删除外键关联的主表会报错，比如：
+	select * from employee;
+	update department set id=10 where id=1;
+	delete from department where id=1;	#这两个操作都会报错
+	
+
+-- 级联更新和级联删除
+DROP TABLE employee;
+#重建的时候指定级联更新和级联删除
+
+CREATE TABLE employee(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	NAME VARCHAR(20),
+	age INT,
+	dep_id INT,	-- 外键对应主表的主键
+	CONSTRAINT emp_depid_fk FOREIGN KEY(dep_id) REFERENCES department(id) ON UPDATE CASCADE ON DELETE CASCADE
+	);
+
+INSERT INTO employee(NAME,age,dep_id) VALUES('小三','20',1);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小四','20',1);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小五','20',1);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小六','20',2);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小七','20',2);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小八','20',2);
+
+SELECT * FROM department;
+SELECT * FROM employee;	
+
+UPDATE department SET id=5 WHERE id=1;	#发现可以更改了，并且查询两张表对应的dep_id和department的ID都相同的变了
+DELETE FROM department WHERE id=5;	
+#发现也可以删掉了，发现department中只有一个部门了，
+并且对应的deployee里面的dep_id为5的员工都被删除了

@@ -1,0 +1,76 @@
+外键约束
+CREATE TABLE achao(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	NAME VARCHAR(20),
+	age INT,
+	dep_name VARCHAR(30),
+	dep_location VARCHAR(30)
+	);
+INSERT INTO achao(NAME,age,dep_name,dep_location) VALUES('小二','20','研发部','北京');
+INSERT INTO achao(NAME,age,dep_name,dep_location) VALUES('小三','20','研发部','北京');
+INSERT INTO achao(NAME,age,dep_name,dep_location) VALUES('小四','20','研发部','北京');
+INSERT INTO achao(NAME,age,dep_name,dep_location) VALUES('小五','20','销售','成都');
+INSERT INTO achao(NAME,age,dep_name,dep_location) VALUES('小六','20','销售','成都');
+INSERT INTO achao(NAME,age,dep_name,dep_location) VALUES('小七','20','销售','成都');
+SELECT * FROM achao;
+#如上的dep_name部门和dep_location地址存了多遍，并且地址改变每个都要修改，比较麻烦
+
+-- 可以把这张表拆分成两张表主表department和从表employee
+CREATE TABLE department(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	dep_name VARCHAR(20),
+	dep_location VARCHAR(20)
+	);
+CREATE TABLE employee(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	NAME VARCHAR(20),
+	age INT,
+	dep_id INT	-- 外键对应主表的主键
+	);
+-- department添加两个部门
+INSERT INTO department VALUES(NULL,'研发部','北京'),(NULL,'销售部','成都');
+-- employee添加一些员工
+INSERT INTO employee(NAME,age,dep_id) VALUES('小三','20',1);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小四','20',1);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小五','20',1);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小六','20',2);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小七','20',2);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小八','20',2);
+
+SELECT * FROM department;
+SELECT * FROM employee;		#解决了多余重复的部门和地址输入问题，更改地址也方便
+#如上的dep_id就叫做外键，把两种表关联起来了
+
+INSERT INTO employee(NAME,age,dep_id) VALUES('小九',21,6) #插进去了，但是部门不存在，也就是错的
+#如何去防止这种事情发生
+
+-- 主键所对应的表就叫做主表，外键所在的表就叫做从表。添加外键约束
+DROP TABLE employee;
+-- 创建表的时候指定外键
+CREATE TABLE employee(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	NAME VARCHAR(50),
+	age INT,
+	dep_id INT,
+	CONSTRAINT emp_depid_fk FOREIGN KEY(dep_id) REFERENCES department(id)
+	);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小九',21,6); 
+#报错已经插不进去了，上面已经在employee添加了外键并和department关联了，department里面没有6这个主键
+#除非主表当中存在的记录相对应的值才能插进去
+-- 插入一些正常的数据
+INSERT INTO employee(NAME,age,dep_id) VALUES('小三','20',1);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小四','20',1);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小五','20',1);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小六','20',2);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小七','20',2);
+INSERT INTO employee(NAME,age,dep_id) VALUES('小八','20',2);
+
+-- 删掉外键约束
+ALTER TABLE employee DROP FOREIGN KEY emp_depid_fk;
+-- 重新加外键约束
+	-- 必须把此表里面的不符合这个外键约束的数据线删掉才行
+-- 比如：
+UPDATE  employee SET dep_id=4 WHERE id=3;
+DELETE FROM employee WHERE dep_id=4;
+SELECT * FROM employee;
+ALTER TABLE employee ADD CONSTRAINT emp_depid_fk FOREIGN KEY(dep_id) REFERENCES department(id);

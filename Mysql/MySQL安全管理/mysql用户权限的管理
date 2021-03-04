@@ -1,0 +1,94 @@
+用户与权限管理
+	mysql的权限就是：用户+IP
+	如：
+		achao@127.0.0.1
+		achao@localhost
+		achao@192.168.1.2
+mysql的各种权限
+1.SQL语句
+	create	Create_priv	数据库、表或索引
+	drop	Drop_priv	数据库或表
+	grant option	Grant_priv	数据库、表、存储过程或函数
+	regerences	References_priv	数据或表
+	alter	Alter_priv	修改表
+	delete Delete_priv 	删除表
+	index Index_priv	用索引查询表
+	insert Insert_priv	插入表
+	select Select_priv	查询表
+	update Update_priv 更新表
+	create user Create——user_priv 创建用户
+	create temporary tables Create——temp_table_priv	创建临时表
+	lock tables Lock_tables_priv	锁定表
+	create view 	Create_view_priv 创建视图
+	show view	Show_view_priv	查看视图
+2.存储过程
+	alter routine	Alter_routine 修改存储过程或存储函数
+	create routine	Create_routine_priv	创建存储过程或存储函数
+	execute	Execute_priv	执行存储过程或函数
+####file File_priv	加载服务器主机上的文件
+	
+	
+3.管理权限
+	process Process_priv	服务器管理
+	reload Reload_priv	重新加载权限表
+	replication client	Repl_client_priv	服务器管理
+	replication slave	Repl_slave_priv	服务器管理
+	show databases 	Show_db_priv	查看数据库
+	shutdow	Showdown_priv	关闭服务器
+	super Super_priv	超级权限
+	
+显示授权
+	show grants for achao;
+	show grants for achao@localhost;
+	select CURRENT_USER();
+	show grants;
+	show grants fro current_user;
+
+创建用户并授权
+	创建无权限的用户
+	show varialbes like 'version';
+	create user achao@localhost;
+	create user achao@'%' identified by '123456'
+	select host,user from mysql.user where user like 'achao%';
+	select * from mysql.user where user='achao' and host='%'\G;
+	创建有授权的用户(授权权限)
+	grant all privilegs on *.* to 'achao'@'%' identified by '123123' with grant option;
+	grant select,insert,update on wordpress.* to achao@'%';
+	plush privileges;
+	
+	开发人员授权：创建、删除、修改、更新--索引、视图、存储过程、函数等权限
+	create user dev@'%' indentified by 'dev';
+	grant create,alter,drop on wordpress.* to dev@'%';
+	flush privileges;
+	show grants for dev@'%';
+	create user dev@'10.10.10.2' indentified by 'dev';
+操作mysql外键的权限
+grant references on wordpress.* to dev@'%'
+flush privileges;
+
+创建mysql临时表的权限
+grant create temporary tables on wordpress.* to dev@'%';
+flush privileges;
+
+操作mysql索引的权限
+grant index on wordpress.* to dev@'%';
+flush privileges;
+
+
+授权回收 revoke(不删除用户)
+针对所有库，单个库，表等等
+revoke和grant语法类似，把偷改为from
+grant index on wordpress.* to dev@'%';
+revoke idnex on wordpress.* from dev@'%';
+
+delete from mysql.user where user='achao' and host='localhost'
+	
+删除用户 drop
+select user,host from mysql.user;
+drop user dev;
+drop user dev@'localhost';
+drop user dev@'10.10.1.2
+select user,host from mysql.user where user like 'dev%'
+
+重命名用户
+rename user 'achao'@'localhost' to 'achao1'@'localhost';

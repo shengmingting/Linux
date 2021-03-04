@@ -1,0 +1,11 @@
+-- 备份achao这个数据库
+mysqldump -uroot -p123456 achao > /home/data/achao.sql
+相当于把表重建了一遍，并把数据插入了进去，通过代码工具比如notepad++打开可以看到
+
+-- 还原achao数据库
+	先登录到数据：
+	mysql -uroot -p123456
+	use achao;
+	drop 表名;
+	source /home/data/achao.sql
+默认不删除的话执行source也是先删除这些表再重建表并导入数据

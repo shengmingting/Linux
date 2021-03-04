@@ -1,0 +1,32 @@
+插入记录
+	insert into 表名 （字段名） values （字段值）
+--插入数据到student中
+INSERT INTO student(id,NAME,birthday) VALUES(1,"明朝","1995-01-23")
+SELECT * FROM student;
+INSERT INTO student VALUES(2,'小蕊','1995-12-14')
+INSERT INTO student(id,NAME) VALUES(3,'小花')
+
+-- 蠕虫复制
+	-- 将一张已经存在的表的数据复制到另一种表中
+	-- insert into 表名 select * from 表名2
+-- 把student表中的数据复制达到achao2的表中 （两张表结构必须一样）
+CREATE TABLE achao2 LIKE student;
+INSERT INTO achao2 SELECT * FROM student;
+SELECT * FROM achao2;
+INSERT INTO achao2(id,NAME) SELECT id,NAME FROM student;
+
+
+修改和删除数据
+-- 修改出生日期为1995-01-22
+UPDATE student SET birthday='1995-01-22';
+SELECT * FROM student;
+UPDATE student SET birthday='1995-01-23' WHERE id=1;
+-- 修改多个字段
+UPDATE student SET NAME='xiao蕊',birthday='1996-12-14' WHERE id=2;
+
+-- 删除表记录
+DELETE FROM student WHERE id=1;
+DELETE FROM student;
+-- truncate 将表删除并再创建一张相同结构的表
+TRUNCATE TABLE achao2;
+SELECT * FROM achao2;

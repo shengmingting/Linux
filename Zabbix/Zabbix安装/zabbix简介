@@ -1,0 +1,65 @@
+1.Zabbix简介：
+	:zabbix是一个基于WEB界面提供分布式系统监视以及网络监视的企业级的开源解决方案
+
+Zabbix由两部分构成，zabbix server与可选组件zabbix agent
+
+Zabbix server 可通过snmp，zabbix agent，ping，端口监视等方法提供对远程服务器/网络状态
+
+Zabbix通过C/S模式采集数据，通过B/S模式在web端展示和配置
+
+
+
+被监控端：主机通过安装agent方式采集数据，网络设备通过SNMP方式采集数据
+
+Server端：通过收集snmp和agent发送的数据，写入数据库，再通过php+apache在web前段展示
+
+
+2.zabbix运行条件：
+server:zabbix server需要运行在lamp环境下，或者lnmp，对硬件要求较低，基本什么配置都能用
+agent：目前已有的agent基本支持市面常见的OS，包含linux，unix，sun，windows等
+snmp：支持各类常见的网络设备
+
+缺点：需要在被监控主机上面安装agent，所有数据都存放在数据库，产生的数据很大，瓶颈主要在数据库
+
+
+3.软件要求
+mysql：5.0.3或者以上
+oracle:10g或者以上
+postgresql：8.1或以上
+sqlite：3.3.5或以上
+IBM db2:9.7或以上
+
+apahce：1.3.12或以上
+PHP：5.3.0或以上
+
+zabbix说明文档
+https://www.zabbix.com/documentation/4.0/zh/manual
+
+
+基础包和依赖环境安装：
+
+zabbix软件下载地址，目前最新版本为5.2
+官方地址为：zabbix.com 找到你需要下载的包
+然后再linux服务器里面执行
+	wget https://cdn.zabbix.com/zabbix/sources/stable/5.2/zabbix-5.2.4.tar.gz
+下载libevent-devel	
+	推荐官网下载 wget http://mirror.centos.org/centos/7/os/x86_64/Packages/libevent-devel-2.0.21-4.el7.x86_64.rpm
+
+下载xampp包
+	推荐官网下载 wget https://sourceforge.net/projects/xampp/files/XAMPP%20Linux/7.4.14/xampp-linux-x64-7.4.14-0-installer.run/download
+	
+
+xampp:
+	下载好了xampp给权限：chmod u+x xampp...&& ./xampp...
+	vim /opt/lampp/etc/extra/httpd-xampp.conf
+		Require local 改为 Require all granted
+	添加环境变量：vim ~/.bash_profile
+		PATH=$PATH:$HOME/bin 改为如下
+		PATH=$PATH:/opt/lampp:/opt/lampp/bin:$HOME/bin
+	source ~/.bash_profile
+	vi /opt/lampp/lampp
+		找到export LD_ASSUME_KERNEL=2.2.5这一行，
+		并修改内容为export LD_ASSUME_KERNEL=3.10.0，保存退出就可以解决了
+		你可以看到你自己的系统版本是多少 more /proc/version 
+	[root@mysql ~]# yum -y install libnsl
+	lammp start

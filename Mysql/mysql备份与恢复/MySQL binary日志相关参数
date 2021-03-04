@@ -1,0 +1,40 @@
+-- binlog 文件相关
+	SHOW VARIABLES LIKE '%binlog_size%';
+	max_bilog_size:范围4K-1G,默认1G，如果一个sql事务太大，binlog也会超过1G
+	binlog_row_image #针对binlog_format='row'格式来设置记录的日志范围：
+		  默认是full，还可以是minimal，noblob
+	binlog_gtid_simple_recovery #再主从复制时有影响，现在是on，用于重启/清理时数据库只打开最老和最新的两个binlog计算gtid_purged和gtid_executed,不需要打开所有文件
+			    #如果主从复制计算gtid出错，改为off，需要打开所有文件计算，影响性能
+			    
+
+
+-- binlog缓存相关的
+	SHOW VARIABLES LIKE '%cache_size%';
+	binlog_cache_size:二进制日志写缓冲区大小，默认32K，写binlog的流程：
+	-- 数据操作buffer pool》binlog buffer》file system buffer》commit》binlog file
+	状态监控：
+	-- show status like '%binlog_cache%';
+	Binlog_cache_use  #表示用到binlog缓存的次数
+	Binlog_cache_disk_use #表示使用临时文件来存放binlog缓存的次数
+	
+	
+	max_binlog_cache_size	#无限大
+	max_binlog_stmt_cache_size #非事务语句文件缓存大小，默认32K
+	binlog_stmt_cache_size
+
+-- flush disk相关的 
+	sync_binlog：
+	写binlog的流程：
+-- 数据操作buffer pool》binlog buffer》file system buffer》commit》binlog file
+-- 在写binlog file之前commit有三种模式，分别是：0,1，N
+	#sync_binlog=0:mysql不会主动同步binlog内容到磁盘文件中，而是依赖操作系统刷新文件的机制刷binlog file一般一秒刷一次
+	#sync_binlog=1：默认值，mysql主要刷新file system buff到磁盘上的binlog file中，每1次commit，就主动fsysn一次
+	#sync_binlog=N(不是0也不是1)mysql主要刷新file SYSTEM buff到磁盘上的binlog file中，每N次commit，就主动fsysn一次
+
+数据库先写redo log，再写binlog
+
+
+注意：
+sync_binlog配合另一个参数innodb_flush_log_at_trx_commit;如果都是1，数据库挂了以后，最多只丢一条数据
+							或一个事务的数据
+SHOW VARIABLES LIKE '%innodb_flush_log_at_trx_commit%';

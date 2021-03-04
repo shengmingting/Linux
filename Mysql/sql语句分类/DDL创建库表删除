@@ -1,0 +1,48 @@
+DDL:数据定义语言：如：建库，建表
+DML:数据操作语言：如：对表中的记录操作增删改
+DQL:数据查询语言：对表中的查询操作
+DCL:数据控制语言：对用户权限的设置
+
+--创建一个数据库：
+	create database achao;
+	create database if not exists achao2;
+	create database sm default character set utf8;
+
+设置自动补全：pip install mycli && mycli -uroot
+
+--查看数据库
+	show databases；
+--修改数据库
+	alter database achao character set utf8;
+--删除数据库
+	drop database achao;
+--查看正在使用的数据库
+	select database();
+	
+DDL建表
+	mysql常用数据类型：
+		int(整数型) double(浮点型) varchar(字符串型) date(日期类型 格式：y-m-d没有时分秒)
+示例：
+	创建一个student表，包含id,name,birthday字段
+create table student
+	(id int, --整数
+	name varchar, --字符串
+	birthday date --生日，最后没有逗号
+	);
+--查看某个数据库中所有表
+SHOW TABLES;
+--查看表结构
+DESC student;
+--查看创建表的sql语句
+SHOW CREATE TABLE student;
+
+	student	CREATE TABLE `student` (
+	`id` INT(11) DEFAULT NULL,
+	`name` VARCHAR(50) DEFAULT NULL,
+	`birthday` DATE DEFAULT NULL
+	) ENGINE=INNODB DEFAULT CHARSET=utf8mb4
+--创建一个表结构相同的表
+CREATE TABLE achao4 LIKE student;
+DESC smc4;
+--删除表achao4
+DROP TABLE achao4; 或者 DROP TABLE IF EXISTS achao4;

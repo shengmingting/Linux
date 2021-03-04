@@ -1,0 +1,40 @@
+数据库表的约束
+ 作用:对表中的数据进行限制，保证数据的正确性，有效性和完整性。一个表中如果添加了约束
+	 不正确的数据将无法插入到表中。约束再创建表的会后添加比较合适。
+	
+	约束种类
+	主键		primary key
+	唯一		unique
+	非空		not null
+	外键		foreign key
+	检查约束		check 注意：mysql不支持
+	
+主键约束：用来唯一标识数据库的每一条记录 不推荐用业务字段作为主键
+1.在创建表的时候给字段添加主键
+	字段名 字段类型 primary key
+	CREATE TABLE achao(
+		id INT PRIMARY KEY,
+		NAME VARCHAR(50)
+		);
+	INSERT INTO achao VALUES(1,'xiaorui');
+	INSERT INTO achao VALUES(1,'xiaorui1');		#报错了，已经有了ID 1了
+	SELECT * FROM achao;
+
+2.在已有的表中添加主键
+	alter table 表名 add primary key(字段名);
+	CREATE TABLE achao(
+		id INT,
+		NAME VARCHAR(50)
+		);
+	ALTER TABLE achao ADD PRIMARY KEY(id);
+	DESC achao;
+	
+3.主键自增
+	CREATE TABLE achao(
+		id INT PRIMARY KEY AUTO_INCREMENT,
+		NAME VARCHAR(50)
+		);
+	INSERT INTO achao(NAME) VALUES('xiaorui');
+	INSERT INTO achao(NAME) VALUES('xiaorui1');
+	delete删除表，字段的主键不会删除，新增字段主键会在原有的基础上开始
+	truncate删除表，会重新从主键为1开始自动新增

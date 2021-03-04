@@ -1,0 +1,26 @@
+mysql自带的init-connect + binlog实现mysql审计
+
+my.cnf:
+init-connect	 #不记录root用户的操作
+
+1.创建一个存放连接信息的表
+	登录数据库执行操作
+	create database auditdb default charset utf8;
+	use auditdb;
+	create table accesslog( ID int primary key auto_increment, ConnectionID int, ConnUserName varchar(30), PrivMatchName varchar(30), LoginTime timestamp);
+2.配置权限	
+	insert into mysql.db(host,db,user,select_priv,Insert_priv) values('%','auditdb','','Y','Y');
+	flush privileges;
+3.配置init-connect
+	my.cnf
+		init-connect='insert into auditdb.accesslog (ConnectionID,ConnUserName,PrivMatchName,LoginTime) values (connection_id(),user(),current_user(),now());'
+		log_bin=/data/mysql/mysql-bin
+		log_bin_index=/data/mysql/mysql-bin.index
+		
+4,记录和跟踪测试 如果用root用户登录操作（不记录root的）
+	登录数据库测试任意创建一个表或者删除一个表
+	 mysqlbinlog --start-datetime='2021-01-24 13:56:00' --stop-datetime='2021-01-24 13:56:59' mysql-bin.000020 |grep 't1' -B 20
+	审计日志可以找到操作语句的线程，然后执行下面的
+	 select * from auditdb.accesslog;
+	 select * from auditdb.accesslog where connectionid=7;
+	性能影响不大

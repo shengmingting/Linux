@@ -1,0 +1,102 @@
+zabbix:
+1.创建zabbix用户
+	groupadd zabbix
+	useradd -g zabbix zabbix -s /sbin/nologin
+2.解压zabbix服务端
+	tar xf zabbix-5.2.4.tar.gz -C /usr/src/
+==========================================================================
+3.进入到数据，默认没密码
+	/opt/lampp/bin/mysql -uroot -p
+		create database zabbix character set utf8 collate utf8_bin;
+		grant all privileges on zabbix.* to zabbix@localhost identified by '123456';
+	
+		use zabbix;
+		source /usr/src/zabbix-5.2.4/database/mysql/schema.sql;
+		source /usr/src/zabbix-5.2.4/database/mysql/data.sql;
+		source /usr/src/zabbix-5.2.4/database/mysql/images.sql;
+		quit;
+==========================================================================		
+4.编译安装zabbix
+		安装依赖包
+			yum -y install net-snmp net-snmp-devel curl curl-devel mysql-devel libevent-devel pcre-devel libcurl-devel libxml2-devel unixODBC-devel
+	
+		cd /usr/src/zabbix-5.2.4/
+		./configure --prefix=/usr/local/zabbix --with-mysql --with-net-snmp --with-libcurl --enable-server --enable-agent --enable-proxy
+		make && make install
+===============================================================================
+5.配置启动脚本
+	cp misc/init.d/fedora/core/zabbix_server /etc/init.d/
+	cp misc/init.d/fedora/core/zabbix_agentd /etc/init.d/
+	chmod +x /etc/init.d/zabbix_agentd
+	chmod +x /etc/init.d/zabbix_server
+			vim /etc/init.d/zabbix_server
+				BASEDIR=/usr/local/zabbix/
+				PIDFILE=/usr/local/zabbix/$BINARY_NAME.pid
+			vim /etc/init.d/zabbix_agentd
+				BASEDIR=/usr/local/zabbix/
+				PIDFILE=/usr/local/zabbix/$BINARY_NAME.pid
+===============================================================================
+	/etc/init.d/zabbix_server 	start/stop/status  启动/停止/查看zabbix状态
+	
+6.创建日志目录和zabbix配置等
+	mkdir /usr/local/zabbix/logs
+	编辑zabbix_agentd配置文件
+	cd /usr/local/zabbix/etc
+	mv zabbix_agentd.conf zabbix_agentd.conf.bak
+	vim zabbix_agentd.conf
+		LogFile=/usr/local/zabbix/logs/zabbix_agentd.log
+		Server=192.168.1.231
+		ServerActive=192.168.1.231	#zabbix服务端的内网IP地址
+		#主机名是唯一的
+		Hostname=docker 
+		#设置默认模板，server端自动发现
+		HostMetadataItem=system.uname
+		
+	编辑zabbix_server配置文件
+	mv zabbix_server.conf zabbix_server.conf.bak
+	vim zabbix_server.conf
+		LogFile=/usr/local/zabbix/logs/zabbix_server.log
+		DBName=zabbix
+		DBUser=zabbix
+		DBHost=localhost
+		DBPassword=123456
+		DBSocket=/opt/lampp/var/mysql/mysql.sock
+		AlertScriptsPath=/usr/local/zabbix/alertscripts
+	
+	创建自定义目录脚本，设置权限，目录下的脚本，可以被zabbix调用
+	mkdir /usr/local/zabbix/alertscripts
+	chown zabbix.zabbix -R /usr/local/zabbix
+==============================================================================
+	更改php.ini文件
+		sed -i 's/max_execution_time=120/max_execution_time=400/g' /opt/lampp/etc/php.ini
+		sed -i 's/max_input_time=60/max_input_time=400/g' /opt/lampp/etc/php.ini
+		sed -i 's/memory_limit=128M/memory_limit=512M/g' /opt/lampp/etc/php.ini
+	vim /opt/lampp/etc/php.ini
+		date.timezone=Europe/Berlin 改为 date.timezone=PRC
+		cgi.fix_pathinfo=1
+		
+		
+7.配置web管理
+	cp -r /usr/src/zabbix-5.2.4/ui/ /usr/local/zabbix/php
+	chown -R zabbix:zabbix /usr/local/zabbix
+	
+	修改/opt/lampp/etc/httpd.conf文件，将下面的denied修改为granted
+		vim /opt/lampp/etc/httpd.conf
+			<Directory />
+			    AllowOverride none
+			    Require all granted
+			</Directory>
+		 去掉这一行注释：Include etc/extra/httpd-vhosts.conf
+		vim /opt/lampp/etc/extra/httpd-vhosts.conf
+			<VirtualHost *:80>
+			    ServerAdmin 192.168.1.231
+			    DocumentRoot "/usr/local/zabbix/php"
+			    ServerName 192.168.1.231
+			    ServerAlias 192.168.1.231
+			    ErrorLog "logs/231-error_log"
+			    CustomLog "logs/231-access_log" common
+			</VirtualHost>
+		/opt/lampp/lampp restart
+		
+		
+	访问网站登录，默认账号密码为：Admin	zabbix

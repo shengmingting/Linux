@@ -1,0 +1,74 @@
+使用zabbix监控mysql的三种方式
+1.只是安装agent
+2.启动模板监控
+3.启动自定义脚本的模板监控
+
+利用zabbix自带的模板监控
+ zabbix_agent客户端操作
+ 
+ 
+ 
+ 官网下载mysql yum存储库安装
+	例如：https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm
+	然后执行：yum localinstall mysql80-community-release-el7-3.noarch.rpm
+	yum repolist enabled | grep "mysql.*-community.*"
+	yum -y install mysql-community-server
+	启动mysql：
+		systemctl start mysqld
+		systemctl enable mysqld
+		systemctl status mysqld
+	查看自动生成的密码：
+		grep 'temporary password' /var/log/mysqld.log
+	通过实施的默认密码策略validate_password要求密码至少包含一个大写字母，
+	一个小写字母，一位数字和一个特殊字符，并且密码总长度至少为8个字符。
+	
+	alter user root@'localhost' identified by 'smc@!A123.';
+ 设置密码只限制长度为8即可：
+	set global validate_password.policy=0;
+	
+	create user zabbix@'%' identified by 'achao55';
+	create user zabbix@'localhost' identified by 'achao55';
+	grant select,process,super,replication client on *.* to zabbix@'%';
+	grant select,process,super,replication client on *.* to zabbix@'%' identified by 'achao666' 
+
+
+
+
+	
+
+客户端再zabbix_agent服务目录下创建.my.cnf连接文件
+	vim /etc/zabbix/.my.cnf
+		[client]
+	#	host=192.168.1.232
+	#	socket=/var/lib/mysql/mysql.sock
+		user=zabbix
+		password=smc555555
+		
+
+配置mysql的key文件
+	拷贝userparameter_mysql.conf文件到被监控的mysql服务器上面
+	从zabbix_server服务端安装时的解压目录里面的
+		服务端：conf/zabbix_agentd/userparameter_mysql.conf
+		拷贝到
+		客户端：/etc/zabbix/zabbix_agentd.d/
+	在这个文件里面自定义K值，也可以
+		UserParameter=mystat[*],/etc/zabbix/getmysql.sh '$1'
+		UserParameter=mysql.version,mysql -V
+	然后编辑这个getmysql.sh的文件
+		这个文件放在mysql监控的zabbix目录下
+		
+	在这个文件里面这样写可以忽略zabbix提示密码明文导致取值不正确。
+	MYSQL_CONN="/usr/bin/mysqladmin --defaults-extra-file=/etc/zabbix/.my.cnf"
+	
+	服务端测试k值：
+		/usr/local/zabbix/bin/zabbix_get -s 192.168.1.232 -k mysql.version
+		/usr/local/zabbix/bin/zabbix_get -s 192.168.1.232 -k mystat[Questions]
+	
+	
+	这里还可以在/etc/zabbix/zabbix_agentd.d/userparameter_mysql.conf 这个文件里面添加一条
+	UserParameter=mysql.status[*],echo "show global status where Variable_name='$1';"|HOME=/etc/zabbix /usr/bin/mysql -N |awk '{print $$2}'
+	HOME指定的是配置文件.my.cnf的目录路径，此文件有账户和密码
+	然后也就是你登录到mysql服务器上面去执行show global status，能列出多少项就能监控多少项
+	比如随便找到一条记录Questions
+	服务端执行zabbix_get -s 192.168.1.232 -k mysql.status[Questions]
+		返回了值，你就可以再zabbix web界面上直接添加监控项就好了
