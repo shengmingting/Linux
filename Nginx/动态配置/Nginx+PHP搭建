@@ -1,0 +1,177 @@
+Nginx安装需要的环境
+[root@client ~]# yum -y install gcc gcc-c++ pcre-devel openssl openssl-devel zlib zlib-devel
+
+创建专用启动Nginx的用户：nginx
+[root@client ~]# useradd -s /sbin/nologin -M www
+	官网：http://nginx.org/en/
+	
+下载源码包：
+[root@client ~]# wget http://nginx.org/download/nginx-1.12.2.tar.gz
+[root@client ~]# tar xf nginx-1.12.2.tar.gz
+
+源代码编译安装：
+[root@client ~]# cd nginx-1.12.2
+[root@client nginx]# ./configure --user=www --group=www --prefix=/usr/local/nginx --with-http_stub_status_module --with-http_ssl_module --with-http_v2_module --with-http_gzip_static_module --with-ipv6 --with-http_sub_module
+[root@client nginx]# make && make install
+查看Nginx构建的参数
+[root@client ~]# /usr/local/nginx/sbin/nginx -V
+添加环境变量
+[root@client ~]# ln -s /usr/local/nginx/sbin/nginx /usr/local/sbin/
+
+PHP官网：https://www.php.net/downloads
+下载源码包：
+[root@client ~]# wget https://www.php.net/distributions/php-7.3.26.tar.gz
+[root@client ~]# tar xf php-7.3.26.tar.gz
+安装PHP依赖包
+[root@client ~]# yum -y install yum -y install libxml2 libxml2-devel gd gd-devel curl-devel openssl-devel bzip2 bzip2-devel libpng libpng-devel
+[root@localhost ~]# wget https://nih.at/libzip/libzip-1.2.0.tar.gz
+[root@localhost ~]# tar xf libzip-1.2.0.tar.gz
+[root@localhost ~]# cd libzip-1.2.0
+[root@localhost libzip-1.2.0]# ./configure  && make && make install
+[root@localhost php-7.3.26]# cp /usr/local/lib/libzip/include/zipconf.h /usr/local/include/zipconf.h
+
+编译安装：
+[root@client ~]# cd php-7.3.26
+[root@client php-7.3.26]#./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc/php --with-curl --with-bz2 --enable-libxml --with-openssl --enable-bcmath --enable-pcntl --enable-sockets --enable-zip --enable-soap --with-gettext --with-zlib --enable-xml --enable-fpm --with-gd
+
+[root@client php-7.3.26]# make && make install
+
+添加配置文件：
+[root@localhost php-7.3.26]# cp php.ini-production /usr/local/php/etc/php.ini
+[root@localhost php-7.3.26]# cp /usr/local/php/etc/php-fpm.conf.default /usr/local/php/etc/php-fpm.conf
+[root@localhost php-7.3.26]# cp /usr/local/php/etc/php-fpm.d/www.conf.default /usr/local/php/etc/php-fpm.d/www.conf
+[root@localhost php-7.3.26]# ln -s /usr/local/php/bin/php /usr/local/bin/php
+复制启动脚本
+[root@localhost php-7.3.26]# cp sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+[root@localhost php-7.3.26]# chmod +x /etc/init.d/php-fpm
+[root@localhost php-7.3.26]# ln -s /etc/init.d/php-fpm /usr/bin/
+[root@localhost ~]# php-fpm命令(开启/重启/停止):
+[root@localhost ~]# php-fpm start/restart/stop
+添加开机启动
+chkconfig --add php-fpm
+查看是否添加成功
+chkconfig | grep php-fpm
+
+nginx 配置文件
+[root@client ~]# vim /usr/local/nginx/conf/nginx.conf
+user  www www;
+
+worker_processes 1;
+
+error_log  /home/wwwlogs/nginx_error.log  crit;
+
+pid        /usr/local/nginx/logs/nginx.pid;
+
+#Specifies the value for maximum file descriptors that can be opened by this process.
+worker_rlimit_nofile 51200;
+
+events
+    {
+        use epoll;
+        worker_connections 51200;
+        multi_accept on;
+    }
+
+http {
+        include       mime.types;
+        default_type  application/octet-stream;
+        server_names_hash_bucket_size 128;
+        client_header_buffer_size 32k;
+        large_client_header_buffers 4 32k;
+        client_max_body_size 50m;
+
+        sendfile   on;
+        tcp_nopush on;
+
+        keepalive_timeout 60;
+
+        tcp_nodelay on;
+
+        fastcgi_connect_timeout 300;
+        fastcgi_send_timeout 300;
+        fastcgi_read_timeout 300;
+        fastcgi_buffer_size 64k;
+        fastcgi_buffers 4 64k;
+        fastcgi_busy_buffers_size 128k;
+        fastcgi_temp_file_write_size 256k;
+
+        gzip on;
+        gzip_min_length  1k;
+        gzip_buffers     4 16k;
+        gzip_http_version 1.1;
+        gzip_comp_level 2;
+        gzip_types     text/plain application/javascript application/x-javascript text/javascript text/css application/xml application/xml+rss;
+        gzip_vary on;
+        gzip_proxied   expired no-cache no-store private auth;
+        gzip_disable   "MSIE [1-6]\.";
+
+        #limit_conn_zone $binary_remote_addr zone=perip:10m;
+        ##If enable limit_conn_zone,add "limit_conn perip 10;" to server section.
+
+        server_tokens off;
+        access_log off;
+
+include /usr/local/nginx/conf/conf.d/*.conf;
+}
+
+
+================nginx访问地址配置==================
+[root@localhost ~]# mkidr /usr/local/nginx/conf/conf.d/
+[root@localhost ~]# vim /usr/local/nginx/conf/conf.d/php.conf 
+server {
+        listen       80;
+        server_name  localhost;
+        root   /data/nginxweb;
+        index  index.html index.jpg index.php;
+	include enable-php.conf;
+location /nginx_status
+        {
+            stub_status on;
+            access_log   off;
+        }
+location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+        {
+            expires      30d;
+        }
+location ~ .*\.(js|css)?$ 
+	{
+            expires      12h;
+        }
+
+        location ~ /\.
+        {
+            deny all;
+        }
+location / {
+            if (!-e $request_filename)
+                {
+            rewrite (.*) /index.php;
+                }
+        }
+}
+
+==================php文件解析====================
+[root@localhost ~]# vim /usr/local/nginx/conf/enable-php.conf 
+location ~ [^/]\.php(/|$)
+       {
+	root /data/nginxweb;
+	try_files $uri =404;
+        fastcgi_pass  127.0.0.1:9000;
+        fastcgi_index index.php;
+        include fastcgi.conf;
+	include fastcgi_params;
+        }
+启动服务：
+[root@client etc]# /usr/local/nginx/sbin/nginx
+[root@client etc]# /usr/local/php/sbin/php-fpm
+
+杀掉php-fpm服务
+[root@iZ2vcblk66sst1khiiiiryZ /]# pkill -9 php-fpm
+
+php-fpm 关闭：kill -INT `cat /usr/run/php-fpm.pid`
+php-fpm 重启：kill -USR2 `cat /usr/run/php-fpm.pid`
+
+
+
+
+
