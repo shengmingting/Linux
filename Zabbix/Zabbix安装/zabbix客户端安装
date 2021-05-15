@@ -10,16 +10,16 @@ cd zabbix-5.2.4
 cp misc/init.d/fedora/core/zabbix_agentd /etc/init.d/
 chmod +x /etc/init.d/zabbix_agentd
 ============================================
-			vim /etc/init.d/zabbix_agentd
-					BASEDIR=/usr/local/zabbix/
-					PIDFILE=/usr/local/zabbix/$BINARY_NAME.pid
-			vim /usr/local/zabbix/etc/zabbix_agentd.conf
-					Server=192.168.1.85				服务端地址
-					ServerActive=192.168.1.85		服务端地址
-					ListenIP=127.0.0.1				本机地址
-					HostMetadataItem=system.uname
-					Include=/usr/local/zabbix/etc/zabbix_agentd.conf.d/*.conf
-					UnsafeUserParameters=1
+vim /etc/init.d/zabbix_agentd
+	BASEDIR=/usr/local/zabbix/
+	PIDFILE=/usr/local/zabbix/$BINARY_NAME.pid
+vim /usr/local/zabbix/etc/zabbix_agentd.conf
+	Server=192.168.1.85				服务端地址
+	ServerActive=192.168.1.85				服务端地址
+	ListenIP=127.0.0.1					本机地址
+	HostMetadataItem=system.uname
+	Include=/usr/local/zabbix/etc/zabbix_agentd.conf.d/*.conf
+	UnsafeUserParameters=1
 
 安装nginx用于监控
 vim /usr/local/nginx/conf/nginx.conf

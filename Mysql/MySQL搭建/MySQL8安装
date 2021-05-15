@@ -1,0 +1,173 @@
+官网下载:
+	例如：wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-boost-8.0.23.tar.gz
+卸载其他的数据库:
+	yum remove mariadb-libs*
+	rpm -qa |grep mariadb
+安装依赖包:
+	yum -y install make wget gcc gcc-c++ ncurses ncurses-devel libaio-devel openssl openssl-devel
+	rpm -qa |grep libaio
+	yum install libaio libaio-devel
+安装cmake 3版本:
+wget https://github.com/Kitware/CMake/releases/download/v3.15.5/cmake-3.15.5.tar.gz
+	tar -zxf cmake-3.15.5.tar.gz
+	cd cmake-3.15.5
+mkdir -p /usr/local/cmake
+	./bootstrap --prefix=/usr/local/cmake
+	gmake && gmake install
+vim /etc/profile
+	export PATH=$PATH:/usr/local/cmake/bin
+查看版本:
+	cmake -version
+安装gcc7:
+	yum install -y centos-release-scl
+	yum install -y devtoolset-7-gcc-c++
+	scl enable devtoolset-7 bash
+源码安装gcc7
+	wget https://mirrors.ustc.edu.cn/gnu/gcc/gcc-7.3.0/gcc-7.3.0.tar.gz
+	tar xf gcc-7.3.0.tar.gz
+	cd gcc-7.3.0
+	mkdir -p /usr/local/gcc
+	./configure --prefix=/usr/local/gcc --enable-bootstrap --enable-checking=release --enable-languages=c,c++ --disable-multilib
+	make && make install
+查看版本:
+	gcc -v
+创建用户和建立数据目录并赋予用户目录权限:
+groupadd mysql
+useradd -r -g mysql -s /sbin/nologin mysql
+mkdir -p /usr/local/mysql
+
+解压并开始安装:
+	tar xf mysql-boost-8.0.23.tar.gz
+	cd mysql-8.0.23
+配置:
+cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
+-DSYSCONFDIR=/etc \
+-DMYSQL_TCP_PORT=3306 \
+-DWITH_BOOST=~/mysql-8.0.23/boost \
+-DDEFAULT_CHARSET=utf8 \
+-DDEFAULT_COLLATION=utf8_general_ci \
+-DENABLED_LOCAL_INFILE=ON \
+-DWITH_INNODB_MEMCACHED=ON \
+-DWITH_INNOBASE_STORAGE_ENGINE=1 \
+-DWITH_FEDERATED_STORAGE_ENGINE=1 \
+-DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
+-DWITH_ARCHIVE_STORAGE_ENGINE=1 \
+-DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \
+-DWITH_PERFSCHEMA_STORAGE_ENGINE=1 \
+-DFORCE_INSOURCE_BUILD=1
+	make && make install 
+
+修改配置文件:
+	vim /etc/my.cnf
+[client]
+port=3306
+socket=/usr/local/mysql/mysql.sock
+default-character-set=utf8
+#user=root
+#password=123
+[mysqld]
+server-id=1
+#skip-grant-tables
+port=3306
+user=mysql
+max_connections=200
+socket=/usr/local/mysql/mysql.sock
+basedir=/usr/local/mysql
+datadir=/usr/local/mysql/data
+pid-file=/usr/local/mysql/data/mysql.pid
+init-connect='SET NAMES utf8'
+character-set-server=utf8
+default-storage-engine=INNODB
+log_error=/usr/local/mysql/logs/mysql-error.log
+slow_query_log_file=/usr/local/mysql/logs/mysql-slow.log
+[mysqldump]
+quick
+max_allowed_packet=16M
+
+	创建数据目录:
+mkdir -p /usr/local/mysql/logs
+chown -R mysql.mysql /usr/local/mysql
+chmod -R 755 /usr/local/mysql/
+	
+初始化:
+	/root/mysql-8.0.23/bin/mysqld --initialize-insecure --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data
+配置启动脚本:
+	cp /root/mysql-8.0.23/support-files/mysql.server /etc/init.d/mysqld
+	chmod +x /etc/init.d/mysqld
+	/etc/init.d/mysqld start
+centos7系统自启动脚本:
+	vim /usr/lib/systemd/system/mysqld.service
+[Unit]
+Description=mysql server daemon
+Documentation=man:mysql(8)
+Documentation=http://dev.mysql.com/doc/refman/en/using-systemd.html
+After=network.target
+After=syslog.target
+[Install]
+WantedBy=multi-user.target
+[Service]
+User=mysql
+Group=mysql
+Type=notify
+TimeoutSec=0
+PermissionsStartOnly=true
+ExecStart=/usr/local/mysql/bin/mysqld $MYSQLD_OPTS
+LimitNOFILE = 10000
+Restart=always
+RestartPreventExitStatus=1
+Environment=MYSQLD_PARENT_PID=1
+PrivateTmp=false
+
+启动命令:
+systemctl status mysqld.service
+systemctl status mysqld
+
+mysql -uroot
+mysql> ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '123123';
+msyql> ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY '123123';
+msyql> show privileges;
+msyql> quit
+
+
+忘记密码
+vim /etc/my.cnf
+	skip-grant-tables
+/etc/init.d/mysqld restart
+
+mysql -uroot	
+mysql> update user set authentication_string='' where user='root';
+msyql> flush privileges;
+mysql> alter user root@'localhost' identified by '123123';
+msyql> flush privileges;
+
+
+
+
+Navicat连接MySQL数据库:
+
+CREATE USER 'root'@'192.168.1.214' IDENTIFIED WITH mysql_native_password BY '123123';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'192.168.1.214' WITH GRANT OPTION;
+ ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '123123';
+查看所有库：
+mysql> show databases;
+查看所有表：
+mysql> show tables;
+查看表中所有内容：
+mysql> select * from 表名；
+
+查看用户密码规则
+select host,user,plugin from mysql.user;
+
+查看自动生成的密码：
+		grep 'temporary password' /var/log/mysqld.log
+	通过实施的默认密码策略validate_password要求密码至少包含一个大写字母，
+	一个小写字母，一位数字和一个特殊字符，并且密码总长度至少为8个字符。
+	
+	alter user root@'localhost' identified by '123123';
+ 设置密码只限制长度为8即可：
+	set global validate_password.policy=0;
+	
+	create user zabbix@'%' identified by 'achao55';
+	create user zabbix@'localhost' identified by 'achao55';
+	grant select,process,super,replication client on *.* to zabbix@'%';
+	grant select,process,super,replication client on *.* to zabbix@'%' identified by 'achao666' 
